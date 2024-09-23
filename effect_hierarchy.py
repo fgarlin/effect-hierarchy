@@ -36,6 +36,15 @@ def read_schemes_xml(fg_root):
                                 fallback = scheme_fallback))
     return scheme_list
 
+def is_valid_scheme(scheme_list, name):
+    # The default empty scheme is valid
+    if name == "":
+        return True
+    for scheme in scheme_list:
+        if scheme["name"] == name:
+            return True
+    return False
+
 def parse_effect_file(scheme_list, path, graph_node_list):
     xmltree = ET.parse(path)
     xmlroot = xmltree.getroot()
@@ -50,7 +59,12 @@ def parse_effect_file(scheme_list, path, graph_node_list):
     for scheme, graph_node in zip(scheme_list, graph_node_list):
         technique_list = list()
         for tniq in xmlroot.iter("technique"):
-            if scheme["name"] == maybe_read_node(tniq, "scheme"):
+            tniq_n = int(tniq.attrib.get("n", 0))
+            tniq_scheme_name = maybe_read_node(tniq, "scheme")
+            # Warn if the scheme is not valid (does not appear in schemes.xml)
+            if not is_valid_scheme(scheme_list, tniq_scheme_name):
+                print(f"technique n={tniq_n} in Effect \"{eff_name}\" has an invalid scheme \"{tniq_scheme_name}\"")
+            if scheme["name"] == tniq_scheme_name:
                 tniq_n = int(tniq.attrib.get("n", 0))
                 technique_list.append(tniq_n)
 
